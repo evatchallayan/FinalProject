@@ -16,11 +16,12 @@ int main(int argc, const char *argv[])
 	double doubleValue1 = 0;
 	Mat frame = cv::Mat(cv::Size(450, 650), CV_8UC3);
   Mat src, dst;
-  src = imread("images/van_gogh.jpg", IMREAD_COLOR);
+  src = imread("Images/van_gogh.jpg", IMREAD_COLOR);
 
 	namedWindow("image", CV_MINOR_VERSION);
 	// Size of trackbars
 	int width = 400;
+	int isSaved = 0;
 
 	// Init cvui and tell it to use a value of 20 for cv::waitKey()
 	// because we want to enable keyboard shortcut for
@@ -45,8 +46,11 @@ int main(int argc, const char *argv[])
 
       if(cvui::button("&Save")){
         imwrite("images/ligh_dark_img.jpg",dst);
-        cvui::text("Image saved");
+        isSaved = 1;
       }
+			if(isSaved){
+				cvui::printf(frame,100, 105, 0.5, 0x00ff00,"Image saved");
+			}
 			if (cvui::button("&Quit")) {
 				break;
 			}
