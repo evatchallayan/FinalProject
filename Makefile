@@ -1,4 +1,6 @@
-all: resize_comp	lighten_comp canny_comp
+all: $(info Compilation) resize_comp lighten_comp canny_comp
+	@printf "'make execute' to run the object files"
+
 execute: resize lighten canny
 
 resize_comp:
@@ -7,6 +9,7 @@ lighten_comp:
 	g++ lighten_darken.cpp  `pkg-config --libs --cflags opencv4` -o lighten_darken.o
 canny_comp:
 	g++ canny_edge.cpp `pkg-config --libs --cflags opencv4` -o canny_edge.o
+
 
 resize:
 	./resize.o
