@@ -11,15 +11,16 @@ using namespace cv;
 using namespace std;
 
 
-
 int main(int argc, const char *argv[])
 {
 
 	Mat frame = cv::Mat(cv::Size(450, 650), CV_8UC3);
-	double bValue = 0, cValue = 1;
-	int isSaved = 0;
   Mat src, dst;
-  src = imread("Images/van_gogh.jpg", IMREAD_COLOR);
+  int isSaved = 0;
+  bool use_canny = false;
+
+  int low_threshold = 50, high_threshold = 150;
+  src = imread("Images/Mark-Zuckerberg.jpg", IMREAD_COLOR);
 
 	if(!src.data)
 	{
@@ -28,7 +29,7 @@ int main(int argc, const char *argv[])
 	}
 
 	namedWindow("image", CV_MINOR_VERSION);
-	moveWindow("image",60 + frame.cols, 80);
+  moveWindow("image",60 + frame.cols, 0);
 	// Size of trackbars
 	int width = 400;
 
@@ -37,31 +38,37 @@ int main(int argc, const char *argv[])
 	while (true) {
 		frame = cv::Scalar(49, 52, 49);
 
+
 		cvui::beginColumn(frame, 20, 20, -1, -1, 6);
 
+    if (use_canny) {
+        cv::cvtColor(src, dst, cv::COLOR_BGR2GRAY);
+        cv::Canny(dst, dst, low_threshold, high_threshold, 3);
+    }
+    else {
+        src.copyTo(dst);
+    }
 
-			cvui::text("brightness trackbar");
-			cvui::trackbar(width, &bValue, -255., 255., 1, "%.1Lf", cvui::TRACKBAR_DISCRETE, 1.);
-			cvui::space(5);
-			cvui::text("COntrast trackbar");
-			cvui::trackbar(width, &cValue, 0., 6., 1, "%.2Lf", cvui::TRACKBAR_DISCRETE, 0.01);
-			cvui::space(5);
+    cvui::space(5);
+    cvui::checkbox(frame, 25, 10, "Use Canny Edge", &use_canny);
+    cvui::trackbar(width, &low_threshold, 5, 150);
+    cvui::trackbar(width, &high_threshold, 80, 300);
 
 
-      src.convertTo(dst,-1,cValue,bValue);
       imshow("image",dst);
 
-
-			if (isSaved) cvui::printf(frame,100, 182, 0.5, 0x00ff00,"Image saved");
+      if (isSaved) cvui::printf(frame,100, 140, 0.5, 0x00ff00,"Image saved");
 			if(cvui::button("&Save"))
 			{
-			 	imwrite("Images/ligh_dark_img.jpg",dst);
+			 	imwrite("Images/canny_edge.jpg",dst);
 			 	isSaved = 1;
 		 	}
+
 			if (cvui::button("&Quit ")) {
 				break;
 			}
       cvui::endColumn();
+
 		cvui::update();
 
 		cv::imshow(WINDOW_NAME, frame);
