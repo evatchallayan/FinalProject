@@ -25,7 +25,7 @@ int main(int argc, const char *argv[]) {
 
 	//for eroding or dilating
 	bool use_dilation = true;
-	
+
 	//Frame in which we'll put settings
 	Mat frame = cv::Mat(cv::Size(400, 300), CV_8UC3);
 	//the kernel

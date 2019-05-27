@@ -1,5 +1,5 @@
 all: resize_comp	lighten_comp canny_comp dilation_comp panorama_comp
-execute: resize lighten canny dilation
+execute: resize lighten canny dilation panorama
 opencv3: resize_comp_opencv3	lighten_comp_opencv3 canny_comp_opencv3 dilation_comp_opencv3 panorama_comp_opencv3
 
 resize_comp:
@@ -23,7 +23,7 @@ canny:
 dilation:
 	./dilation_erosion.o
 panorama:
-	./panorama_stitching.o /Images/eiffel1.jpeg Images/eiffel2.jpeg
+	./panorama_stitching.o Images/eiffel1.jpeg Images/eiffel2.jpeg
 
 resize_comp_opencv3:
 	g++ resize.cpp  `pkg-config --libs --cflags opencv` -o resize.o
