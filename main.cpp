@@ -134,6 +134,17 @@ int main(int argc, const char *argv[])
         int x_light= x_canny;
         int y_light= y_resize+220;
         cvui::window(frame, x_light, y_light, 400,200, "Lighten & Darken");
+        cvui::text(frame, x_light+10, y_light+25, "brightness trackbar");
+        cvui::trackbar(frame, x_light, y_light+50, width, &bValue, -225.,255.);
+       // cvui::trackbar(width, &bValue, -255., 255., 1, "%.1Lf", cvui::TRACKBAR_DISCRETE, 1.);
+       // cvui::space(5);
+        cvui::text(frame, x_light+10, y_light+120, "COntrast trackbar");
+        cvui::trackbar(frame, x_light, y_light+150, width, &cValue,0.,6.);
+
+        //cvui::trackbar(width, &cValue, 0., 6., 1, "%.2Lf", cvui::TRACKBAR_DISCRETE, 0.01);
+       // cvui::space(5);
+
+        dst.convertTo(dst,-1,cValue,bValue);
 
 
         /*----------Finish---------*/
@@ -167,10 +178,10 @@ int main(int argc, const char *argv[])
         }
 
         if (use_dilation) {
-            dilate(src, dst, kernel);
+            dilate(dst, dst, kernel);
         }
         else if(use_erosion){
-            erode(src, dst, kernel);
+            erode(dst, dst, kernel);
         }
 
         /*----------Finish---------*/
