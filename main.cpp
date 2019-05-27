@@ -49,7 +49,7 @@ int main(int argc, const char *argv[])
     int	shape_type=0;
     //Size of the kernel for Erode and Clone
     int siz = 0;
-
+    double bValue = 0, cValue = 1;
 
     cvui::init(WINDOW_NAME);
 
@@ -135,11 +135,11 @@ int main(int argc, const char *argv[])
         int y_light= y_resize+220;
         cvui::window(frame, x_light, y_light, 400,200, "Lighten & Darken");
         cvui::text(frame, x_light+10, y_light+25, "brightness trackbar");
-        cvui::trackbar(frame, x_light, y_light+50, width, &bValue, -225.,255.);
+        cvui::trackbar(frame, x_light, y_light+50, 150, &bValue, -225.,255.);
        // cvui::trackbar(width, &bValue, -255., 255., 1, "%.1Lf", cvui::TRACKBAR_DISCRETE, 1.);
        // cvui::space(5);
         cvui::text(frame, x_light+10, y_light+120, "COntrast trackbar");
-        cvui::trackbar(frame, x_light, y_light+150, width, &cValue,0.,6.);
+        cvui::trackbar(frame, x_light, y_light+150, 150, &cValue,0.,6.);
 
         //cvui::trackbar(width, &cValue, 0., 6., 1, "%.2Lf", cvui::TRACKBAR_DISCRETE, 0.01);
        // cvui::space(5);
@@ -157,12 +157,13 @@ int main(int argc, const char *argv[])
 
         int x_erosion= x_canny;
         int y_erosion= y_light+220;
-        cvui::window(frame, x_erosion, y_erosion, 400,200, "dilation erosion");
-        cvui::checkbox(frame, x_erosion+10, y_erosion+25 , "Dilation (if unchecked we apply erosion)", &use_dilation);
+        cvui::window(frame, x_erosion, y_erosion, 400,200, "Dilation & Erosion");
+        cvui::checkbox(frame, x_erosion+10, y_erosion+25 , "Dilation" , &use_dilation);
+        cvui::checkbox(frame, x_erosion+90, y_erosion+25 , "Erosion", &use_erosion);
         //creating the trackbar for choosing the shape of kernel
-        cvui::text(frame, x_erosion, y_erosion+50, "Shape: 0=Rectangular box, 1=Cross & 2=Ellipse");
+        cvui::text(frame, x_erosion, y_erosion+50, "Shape:  0-Box  1-Cross  2-Ellipse");
         cvui::trackbar(frame, x_erosion, y_erosion+60, 150, &shape_type, 0, 2);
-        cvui::checkbox(frame, x_erosion+10, y_erosion+110 , "Erosion", &use_erosion);
+
         //creating the trackbar for reading the size
         cvui::text(frame, x_erosion, y_erosion+130, "Size of kernel(2n+1)");
         cvui::trackbar(frame, x_erosion, y_erosion+150, 150, &siz, 0, 21);
