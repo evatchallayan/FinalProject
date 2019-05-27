@@ -2,9 +2,10 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <ctime>
+#include <sstream>
 
 #define CVUI_IMPLEMENTATION
-#include "cvui.h"
+#include "cvui-2.7.0/cvui.h"
 
 #define WINDOW_NAME	"Operations"
 #define X 600
@@ -19,7 +20,7 @@ int main(int argc, const char *argv[])
     Mat frame = cv::Mat(cv::Size(X, Y), CV_8UC3);
     Mat src, dst;
     Mat kernel; //for erosion
-    src = imread("mark.jpg", IMREAD_COLOR);
+    src = imread("Images/Mark-Zuckerberg.jpg", IMREAD_COLOR);
 
     if(!src.data)
     {
@@ -27,9 +28,18 @@ int main(int argc, const char *argv[])
         exit(0) ;
     }
 
+    namedWindow("Image", CV_MINOR_VERSION);
+    moveWindow("Image",60 + frame.cols, 80);
 
     int low_threshold = 50, high_threshold = 150;
     int width = 400;
+
+
+    double vValue = 1;
+    double hValue = 1;
+    bool keepProportion = true;
+    int vSize, hSize;
+    std::ostringstream size;
 
     bool use_canny = false;
     bool use_dilation = false;
@@ -82,12 +92,39 @@ int main(int argc, const char *argv[])
 
 
 
-        /*  RISE BAR */
+        /*  RESIZE BAR */
 
 
         int x_resize= x_canny;
         int y_resize= y_canny+220;
+
         cvui::window(frame, x_resize, y_resize, 400,200, "Resize");
+
+        cvui::checkbox(frame, x_resize+10, y_resize+25, "Keep Proportion", &keepProportion);
+        cvui::text(frame, x_resize+60, y_resize+50, "Vertical");
+    		cvui::trackbar(frame, x_resize+10, y_resize+55, 150, &vValue, 0.2, 3., 1, "%.3Lf",  1, 0.001 );
+        cvui::text(frame, x_resize+50, y_resize+110,"Horizontal");
+    		cvui::trackbar(frame, x_resize+10, y_resize+115, 150, &hValue, 0.2, 3., 1, "%.3Lf", 1, 0.001);
+        cvui::text(frame, x_resize+40, y_resize+175,size.str());
+    		size.clear();
+    		size.str("");
+
+        if(keepProportion){
+    			resize(src, dst, Size(), vValue, vValue, INTER_CUBIC);
+    			hSize = dst.cols;
+    			vSize = dst.rows;
+    			// cout <<  "H: " << hSize << " V: "<< vSize << endl	;
+    			size << "H: " << hSize << " V: "<< vSize;
+
+    		}
+    		else{
+    			resize(src, dst, Size(), hValue, vValue, INTER_CUBIC);
+    			hSize = dst.cols;
+    			vSize = dst.rows;
+    			// cout << "H: " << hSize << " V: "<< vSize << endl;
+    			size << "H: " << hSize << " V: "<< vSize;
+
+    		}
 
         /*----------Finish---------*/
 
@@ -143,6 +180,8 @@ int main(int argc, const char *argv[])
 
 
         cv::imshow("Image", dst);
+
+
         cvui::update();
         cv::imshow(WINDOW_NAME, frame);
 
