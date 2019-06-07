@@ -23,12 +23,8 @@ void CallBackFunc(int event, int x, int y, int flags, void* param)
     cout << "callback-0" << endl;
     for(int c = 0; c < m.channels(); c++){
       m.at<Vec3b>(y,x)[c] = 0;
-      cv::imshow("Image", m);
-      cvui::update();
+
     }
-
-    // cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << endl;
-
   }
   else if ( event == 1 )
   {
@@ -231,7 +227,7 @@ int main(int argc, const char *argv[])
     cvui::checkbox(frame, x_draw+10, y_draw+25 , "Pen", &use_draw);
     if (use_draw){
       cout << "-----------------" << use_draw <<endl;
-      setMouseCallback("Image", CallBackFunc, &dst);
+      cv::setMouseCallback("Image", CallBackFunc, &dst);
       cout << "-----------------" <<endl;
       // cv::imshow("Image", dst);
       // cv::waitKey(25);
@@ -241,7 +237,7 @@ int main(int argc, const char *argv[])
 
 
 
-    //cv::imshow("Image", dst);
+    cv::imshow("Image", dst);
 
 
     cvui::update();
