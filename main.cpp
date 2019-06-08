@@ -3,7 +3,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <ctime>
 #include <sstream>
-
+#include <stdlib.h>
 #define CVUI_IMPLEMENTATION
 #include "cvui-2.7.0/cvui.h"
 
@@ -11,28 +11,125 @@
 #define X 600
 #define Y 1000
 
+
 using namespace cv;
 using namespace std;
 
+Mat src, dst;
+bool use_draw = false;
+bool use_canny = false;
+bool use_dilation = false;
+bool use_erosion = false;
+int isSaved = 0;
+bool leftButton = false;
+String colour = "Black";
+int r = 0,g = 0,b = 0;
+int s = 1;
+int timeVar = 50;
+
+void CheckSave(int* isSaved, Mat frame, Mat dst)
+{
+	if (*isSaved)
+	{
+		timeVar = timeVar -1;
+		cvui::printf(frame,X-110, 70, 0.5, 0x00ff00,"Image saved");
+		if(timeVar == 0) *isSaved = 0;
+	}
+	if (cvui::button(frame, X-80, 40,"Save"))
+	{
+		imwrite("Images/newImage.jpg",dst);
+		*isSaved = 1;
+		timeVar = 50;
+	}
+}
+
+void setRGB(int red, int green, int blue){
+  // cout << "setRGB" << endl;
+
+  r = red;
+  g = green;
+  b = blue;
+}
+
+void setSize(int size){
+  s = size;
+}
+void showColor(int c)
+{
+  switch (c) {
+    case 1:
+      setRGB(0,0,0);
+      colour = "Black";
+      break;
+    case 2:
+      setRGB(255,0,0);
+       colour = "Red";
+       break;
+    case 3:
+      setRGB(0,255,0);
+       colour = "Green";
+       break;
+    case 4:
+      setRGB(0,0,255);
+       colour = "Blue";
+       break;
+    case 5:
+      setRGB(255,255,255);
+       colour = "White";
+       break;
+    default:
+      setRGB(0,0,0);
+      colour = "Black";
+      break;
+
+  }
+
+}
+
+void turnOffUseVar()
+{
+  use_canny = false;
+  use_dilation = false;
+  use_erosion = false;
+
+}
 void CallBackFunc(int event, int x, int y, int flags, void* param)
 {
-  Mat& m = *(cv::Mat*) param;
+  if(use_draw){
+    turnOffUseVar();
+    Mat& m = *(cv::Mat*) param;
 
-  if  (event == 0)
-  {
-    cout << "callback-0" << endl;
-    for(int c = 0; c < m.channels(); c++){
-      m.at<Vec3b>(y,x)[c] = 0;
+    if(event == 1){
+      leftButton = true;
+    }
+    else if(event == 4 ){
+      leftButton = false;
+    }
+
+    if  (event == 0 && leftButton)
+    {
+      // cout << "callback-0" << endl;
+      for(int i = -s; i < s + 2; i++){
+        for(int j = -s; j < s + 2; j++){
+          for(int c = 0; c < m.channels(); c++){
+
+            m.at<Vec3b>(y+j,x+i)[0] = b; //blue
+            m.at<Vec3b>(y+j,x+i)[1] = g; //green
+            m.at<Vec3b>(y+j,x+i)[2] = r; //red
+          }
+        }
+      }
+      cv::imshow("Image", m);
 
     }
-  }
-  else if ( event == 1 )
-  {
-    for(int c = 0; c < m.channels(); c++){
-
-      cout << "Chanenel c=" << c << " -->" << (int)m.at<Vec3b>(y,x)[c] << endl;
-
-    }
+    // else if ( event == 1 )
+    // {
+    //
+    //   // for(int c = 0; c < m.channels(); c++){
+    //     // cout << "Chanenel c=" << c << " -->" << (int)m.at<Vec3b>(y,x)[c] << endl;
+    //
+    //   }
+    // }
   }
 }
 
@@ -40,8 +137,9 @@ void CallBackFunc(int event, int x, int y, int flags, void* param)
 int main(int argc, const char *argv[])
 {
   Mat frame = cv::Mat(cv::Size(X, Y), CV_8UC3);
-  Mat src, dst;
   Mat kernel; //for erosion
+  int count = 1;
+  int si = 1;
 
 
   // VideoCapture cap ("Images/chaplin.mp4");
@@ -70,11 +168,7 @@ int main(int argc, const char *argv[])
   int vSize, hSize;
   std::ostringstream size;
 
-  bool use_draw = false;
-  bool use_canny = false;
-  bool use_dilation = false;
-  bool use_erosion = false;
-  bool isSaved = false;
+
   //shape of kernel for erosion
   int	shape_type=0;
   //Size of the kernel for Erode and Clone
@@ -91,12 +185,8 @@ int main(int argc, const char *argv[])
     if (cvui::button(frame, X-80, 10, "Quit")) {
       break;
     }
-    if (cvui::button(frame, X-80, 40, "Save")) {
-      imwrite("canny_edge.jpg",dst);
-      isSaved = true;
-    }
-    // if (isSaved) cvui::printf(frame,X-100, 50, 0.4, 0x00ff00,"Image saved");
 
+     CheckSave(&isSaved, frame, dst);
 
 
     /*  CANNY EDGE BAR */
@@ -110,12 +200,14 @@ int main(int argc, const char *argv[])
     cvui::trackbar(frame, x_canny, y_canny+50, 150, &low_threshold, 5, 150);
     cvui::trackbar(frame, x_canny, y_canny+100, 150, &high_threshold, 80, 300);
 
-    if (use_canny) {
-      cv::cvtColor(src, dst, cv::COLOR_BGR2GRAY);
-      cv::Canny(dst, dst, low_threshold, high_threshold, 3);
-    }
-    else {
-      src.copyTo(dst);
+    if(!use_draw){
+      if (use_canny) {
+        cv::cvtColor(src, dst, cv::COLOR_BGR2GRAY);
+        cv::Canny(dst, dst, low_threshold, high_threshold, 3);
+      }
+      else {
+        src.copyTo(dst);
+      }
     }
 
     /*----------Finish---------*/
@@ -140,23 +232,28 @@ int main(int argc, const char *argv[])
     size.clear();
     size.str("");
 
-    if(keepProportion){
-      resize(dst2, dst, Size(), vValue, vValue, INTER_CUBIC);
-      hSize = dst.cols;
-      vSize = dst.rows;
-      // cout <<  "H: " << hSize << " V: "<< vSize << endl	;
-      size << "H: " << hSize << " V: "<< vSize;
+    if(!use_draw){
+      if(keepProportion){
+        resize(dst2, dst, Size(), vValue, vValue, INTER_CUBIC);
+        hSize = dst.cols;
+        vSize = dst.rows;
+        // cout <<  "H: " << hSize << " V: "<< vSize << endl	;
+        size << "H: " << hSize << " V: "<< vSize;
+
+      }
+      else{
+        resize(dst2, dst, Size(), hValue, vValue, INTER_CUBIC);
+        hSize = dst.cols;
+        vSize = dst.rows;
+        // cout << "H: " << hSize << " V: "<< vSize << endl;
+        size << "H: " << hSize << " V: "<< vSize;
+
+      }
 
     }
     else{
-      resize(dst2, dst, Size(), hValue, vValue, INTER_CUBIC);
-      hSize = dst.cols;
-      vSize = dst.rows;
-      // cout << "H: " << hSize << " V: "<< vSize << endl;
       size << "H: " << hSize << " V: "<< vSize;
-
     }
-
     /*----------Finish---------*/
 
 
@@ -169,14 +266,14 @@ int main(int argc, const char *argv[])
     cvui::trackbar(frame, x_light, y_light+50, 150, &bValue, -225.,255.);
     // cvui::trackbar(width, &bValue, -255., 255., 1, "%.1Lf", cvui::TRACKBAR_DISCRETE, 1.);
     // cvui::space(5);
-    cvui::text(frame, x_light+10, y_light+120, "COntrast trackbar");
+    cvui::text(frame, x_light+10, y_light+120, "Contrast trackbar");
     cvui::trackbar(frame, x_light, y_light+150, 150, &cValue,0.,6.);
 
     //cvui::trackbar(width, &cValue, 0., 6., 1, "%.2Lf", cvui::TRACKBAR_DISCRETE, 0.01);
     // cvui::space(5);
-
-    dst.convertTo(dst,-1,cValue,bValue);
-
+    if(!use_draw){
+      dst.convertTo(dst,-1,cValue,bValue);
+    }
 
     /*----------Finish---------*/
 
@@ -208,14 +305,14 @@ int main(int argc, const char *argv[])
     else if(shape_type==2){
       kernel = getStructuringElement(MORPH_ELLIPSE, Size(2 * siz + 1, 2 * siz + 1));
     }
-
-    if (use_dilation) {
-      dilate(dst, dst, kernel);
+    if(!use_draw){
+      if (use_dilation) {
+        dilate(dst, dst, kernel);
+      }
+      else if(use_erosion){
+        erode(dst, dst, kernel);
+      }
     }
-    else if(use_erosion){
-      erode(dst, dst, kernel);
-    }
-
     /*----------Finish---------*/
 
 
@@ -225,10 +322,18 @@ int main(int argc, const char *argv[])
     int y_draw = 10;
     cvui::window(frame, x_draw, y_draw, 190,200, "Draw");
     cvui::checkbox(frame, x_draw+10, y_draw+25 , "Pen", &use_draw);
+
+    cvui::text(frame, x_draw+10, y_draw+55 , "Colour:");
+    cvui::counter(frame, x_draw+10,  y_draw+70, &count);
+    showColor(count);
+    cvui::text(frame, x_draw+110, y_draw+75 , colour);
+
+    cvui::text(frame, x_draw+10, y_draw+100 , "Size:");
+    cvui::counter(frame, x_draw+10,  y_draw+115, &si);
+    setSize(si);
+
     if (use_draw){
-      cout << "-----------------" << use_draw <<endl;
       cv::setMouseCallback("Image", CallBackFunc, &dst);
-      cout << "-----------------" <<endl;
       // cv::imshow("Image", dst);
       // cv::waitKey(25);
     }
