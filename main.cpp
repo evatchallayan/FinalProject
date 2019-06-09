@@ -23,7 +23,7 @@ bool use_erosion = false;
 int isSaved = 0;
 bool leftButton = false;
 String colour = "Black";
-int r = 0,g = 0,b = 0;
+int red, green, blue;
 int s = 1;
 int timeVar = 50;
 
@@ -43,12 +43,12 @@ void CheckSave(int* isSaved, Mat frame, Mat dst)
 	}
 }
 
-void setRGB(int red, int green, int blue){
+void setRGB(int x, int y, int z){
   // cout << "setRGB" << endl;
 
-  r = red;
-  g = green;
-  b = blue;
+  red = x;
+  green = y;
+  blue = z;
 }
 
 void setSize(int size){
@@ -109,13 +109,15 @@ void CallBackFunc(int event, int x, int y, int flags, void* param)
     if  (event == 0 && leftButton)
     {
       // cout << "callback-0" << endl;
-      for(int i = -s; i < s + 2; i++){
-        for(int j = -s; j < s + 2; j++){
-          for(int c = 0; c < m.channels(); c++){
+      if(x!= m.cols && x!= 0 && y!=m.rows && y!=0 ){
+        for(int i = -s; i < s +1; i++){
+          for(int j = -s; j < s + 1; j++){
+            for(int c = 0; c < m.channels(); c++){
 
-            m.at<Vec3b>(y+j,x+i)[0] = b; //blue
-            m.at<Vec3b>(y+j,x+i)[1] = g; //green
-            m.at<Vec3b>(y+j,x+i)[2] = r; //red
+              m.at<Vec3b>(y+j,x+i)[0] = blue; //blue
+              m.at<Vec3b>(y+j,x+i)[1] = green; //green
+              m.at<Vec3b>(y+j,x+i)[2] = red; //red
+            }
           }
         }
       }
@@ -140,7 +142,7 @@ int main(int argc, const char *argv[])
   Mat kernel; //for erosion
   int count = 1;
   int si = 1;
-
+  int r = 0,g = 0,b = 0;
 
   // VideoCapture cap ("Images/chaplin.mp4");
   // if(!cap.isOpened()){
@@ -262,7 +264,7 @@ int main(int argc, const char *argv[])
     int x_light= x_canny;
     int y_light= y_resize+220;
     cvui::window(frame, x_light, y_light, 400,200, "Lighten & Darken");
-    cvui::text(frame, x_light+10, y_light+25, "brightness trackbar");
+    cvui::text(frame, x_light+10, y_light+25, "Brightness trackbar");
     cvui::trackbar(frame, x_light, y_light+50, 150, &bValue, -225.,255.);
     // cvui::trackbar(width, &bValue, -255., 255., 1, "%.1Lf", cvui::TRACKBAR_DISCRETE, 1.);
     // cvui::space(5);
@@ -321,15 +323,22 @@ int main(int argc, const char *argv[])
     int x_draw = 220;
     int y_draw = 10;
     cvui::window(frame, x_draw, y_draw, 190,200, "Draw");
-    cvui::checkbox(frame, x_draw+10, y_draw+25 , "Pen", &use_draw);
+    cvui::checkbox(frame, x_draw+10, y_draw+25 , "Pencil", &use_draw);
 
-    cvui::text(frame, x_draw+10, y_draw+55 , "Colour:");
-    cvui::counter(frame, x_draw+10,  y_draw+70, &count);
-    showColor(count);
-    cvui::text(frame, x_draw+110, y_draw+75 , colour);
+    cvui::text(frame, x_draw+10, y_draw+55 , "R:");
+    cvui::trackbar(frame, x_draw+20, y_draw+35, 150, &r, 0,255);
+    cvui::text(frame, x_draw+10, y_draw+100 , "G:");
+    cvui::trackbar(frame, x_draw+20, y_draw+78, 150, &g, 0,255);
+    cvui::text(frame, x_draw+10, y_draw+145 , "B:");
+    cvui::trackbar(frame, x_draw+20, y_draw+125, 150, &b, 0,255);
+    setRGB((int)r,(int)g,(int)b);
+    // cvui::text(frame, x_draw+10, y_draw+55 , "Colour:");
+    // cvui::counter(frame, x_draw+10,  y_draw+70, &count);
+    // showColor(count);
+    // cvui::text(frame, x_draw+110, y_draw+75 , colour);
 
-    cvui::text(frame, x_draw+10, y_draw+100 , "Size:");
-    cvui::counter(frame, x_draw+10,  y_draw+115, &si);
+    cvui::text(frame, x_draw+10, y_draw+175 , "Size:");
+    cvui::counter(frame, x_draw+60,  y_draw+170, &si);
     setSize(si);
 
     if (use_draw){
