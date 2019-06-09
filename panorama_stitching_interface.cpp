@@ -76,6 +76,10 @@ namedWindow("Photo4", CV_MINOR_VERSION);
 moveWindow("Photo4",frame.cols+500, 100+frame.rows);
 imshow("Photo4", img4);
 
+imgs.push_back(img1); 
+imgs.push_back(img2); 
+imgs.push_back(img3); 
+imgs.push_back(img4);
 
 
 	while(true){
@@ -85,10 +89,7 @@ imshow("Photo4", img4);
 		cvui::checkbox(frame, 25, 50, "Stitch", &stitch);
 
 		if(stitch){
-			imgs.push_back(img1); 
-			imgs.push_back(img2); 
-			imgs.push_back(img3); 
-			imgs.push_back(img4); 		
+			 		
 
 			cvDestroyWindow("Photo1");
 			cvDestroyWindow("Photo2");
