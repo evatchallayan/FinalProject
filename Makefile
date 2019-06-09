@@ -1,6 +1,6 @@
 all: resize_comp	lighten_comp canny_comp dilation_comp panorama_comp main_comp
 execute: run
-opencv3: resize_comp_opencv3lighten_comp_opencv3 canny_comp_opencv3 dilation_comp_opencv3 panorama_comp_opencv3 main_comp_opencv3
+opencv3: resize_comp_opencv3 lighten_comp_opencv3 canny_comp_opencv3 dilation_comp_opencv3 panorama_comp_opencv3 main_comp_opencv3
 
 resize_comp:
 	g++ resize.cpp  `pkg-config --libs --cflags opencv4` -o resize
