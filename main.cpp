@@ -4,6 +4,10 @@
 #include <ctime>
 #include <sstream>
 #include <stdlib.h>
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/stitching.hpp"
+
+
 #define CVUI_IMPLEMENTATION
 #include "cvui-2.7.0/cvui.h"
 
@@ -22,6 +26,21 @@ bool use_dilation = false;
 bool use_erosion = false;
 int isSaved = 0;
 bool leftButton = false;
+
+
+bool stitch =false;
+bool image1 = false;
+bool image2 = false;
+bool image3 = false;
+bool image4 = false;
+
+Stitcher::Mode mode = Stitcher::PANORAMA;
+vector<Mat> imgs;
+
+
+
+
+
 String colour = "Black";
 int red, green, blue;
 int s = 1;
@@ -183,6 +202,55 @@ int main(int argc, const char *argv[])
   int siz = 0;
   double bValue = 0, cValue = 1;
 
+/**---------DIVISION COUNTER & MATRIXES------**/
+int counterImages = 2;
+bool divide = false;
+Mat crop1;
+Mat crop2;
+Mat crop3;
+Mat crop4;
+
+  /**--------PANORAMA IMAGES----------**/
+
+
+Mat img1= imread("Images/mark1.jpg");
+if(img1.empty()){
+cout<<"Image 1 is empty.";
+return -1;
+}
+
+Mat img2= imread("Images/mark2.jpg");
+if(img2.empty()){
+cout<<"Image 2 is empty.";
+return -1;
+}
+
+Mat img3= imread("Images/mark3.jpg");
+if(img3.empty()){
+cout<<"Image 3 is empty.";
+return -1;
+}
+
+Mat img4= imread("Images/mark4.jpg");
+if(img4.empty()){
+cout<<"Image 4 is empty.";
+return -1;
+}
+
+Mat img5= imread("Images/mark5.jpg");
+if(img4.empty()){
+cout<<"Image 5 is empty.";
+return -1;
+}
+
+
+imgs.push_back(img1); 
+imgs.push_back(img2); 
+//imgs.push_back(img3); 
+//imgs.push_back(img4);
+imgs.push_back(img5); 
+
+/**---------------------**/
   cvui::init(WINDOW_NAME);
 
   while (true) {
@@ -229,7 +297,7 @@ int main(int argc, const char *argv[])
     int x_resize= x_canny;
     int y_resize= y_canny+220;
 
-    cvui::window(frame, x_resize, y_resize, 400,200, "Resize");
+    cvui::window(frame, x_resize, y_resize, 200,200, "Resize");
 
     cvui::checkbox(frame, x_resize+10, y_resize+25, "Keep Proportion", &keepProportion);
     cvui::text(frame, x_resize+60, y_resize+50, "Vertical");
@@ -269,7 +337,7 @@ int main(int argc, const char *argv[])
 
     int x_light= x_canny;
     int y_light= y_resize+220;
-    cvui::window(frame, x_light, y_light, 400,200, "Lighten & Darken");
+    cvui::window(frame, x_light, y_light, 200,200, "Lighten & Darken");
     cvui::text(frame, x_light+10, y_light+25, "Brightness trackbar");
     cvui::trackbar(frame, x_light, y_light+50, 150, &bValue, -225.,255.);
     // cvui::trackbar(width, &bValue, -255., 255., 1, "%.1Lf", cvui::TRACKBAR_DISCRETE, 1.);
@@ -323,7 +391,6 @@ int main(int argc, const char *argv[])
     }
     /*----------Finish---------*/
 
-
     /*PEN FUNCTION*/
 
     int x_draw = 220;
@@ -355,7 +422,120 @@ int main(int argc, const char *argv[])
 
     /*----------Finish---------*/
 
+    /*  PANORAMA BAR */
 
+    int x_panorama= x_draw;
+    int y_panorama= y_draw+220;
+    cvui::window(frame, x_panorama, y_panorama, 190,100, "Panorama Stitching");
+    
+	
+
+    cvui::checkbox(frame, x_panorama+10, y_panorama+50, "Stitch", &stitch);
+	
+	if(stitch){
+		
+	Mat pano;	
+	Ptr<Stitcher> stitcher = Stitcher::create(mode);
+	Stitcher::Status status = stitcher->stitch(imgs, pano);
+
+	if (status != Stitcher::OK){
+        	cvui::text(frame, 90, 250, "STATUS NOT OK");
+   	}
+
+	imwrite("Images/stitch.jpg", pano);
+	Mat res = imread("Images/stitch.jpg");
+
+	
+	namedWindow("Result", CV_MINOR_VERSION);
+	moveWindow("Result",frame.cols+500, 100+frame.rows);
+	imshow("Result", pano);
+	
+			
+	}else{
+		cvDestroyWindow("Result");
+	}
+	
+   /*----------Finish---------*/
+  /* DIVISION BAR */
+	
+	int x_division = x_panorama;
+    	int y_division = y_panorama+120;
+    	cvui::window(frame, x_division, y_division, 190,200, "Division");
+	cvui::checkbox(frame, x_division+10, y_division+50, "Division", &divide);
+	cvui::counter(frame, x_division+10,y_division+90, &counterImages);
+
+
+	if(divide){
+	
+		if(counterImages==2){
+		cvDestroyWindow("image3");
+		cvDestroyWindow("image4");
+		crop1 = src (Range(0,src.rows), Range(0,(src.cols/2)+100));
+		crop2 = src (Range(0,src.rows), Range(src.cols/2,src.cols));
+		imwrite("Images/image1crop.jpg",crop1);
+	 	imwrite("Images/image2crop.jpg",crop2);
+		}
+
+		if(counterImages==3){
+		crop1 = src (Range(0,src.rows), Range(0,(src.cols/3)+100));
+		crop2 = src (Range(0,src.rows), Range(src.cols/3,(2*(src.cols)/3))+100);
+		crop3 = src (Range(0,src.rows), Range(2*(src.cols)/3,src.cols));
+		imwrite("Images/image1crop.jpg",crop1);
+	 	imwrite("Images/image2crop.jpg",crop2);
+		imwrite("Images/image3crop.jpg",crop3);
+		cvDestroyWindow("image4");
+		}
+
+		if(counterImages==4){
+		crop1 = src (Range(0,src.rows), Range(0,(src.cols/4)+100));
+		crop2 = src (Range(0,src.rows), Range(src.cols/4,(2*(src.cols)/4))+100);
+		crop3 = src (Range(0,src.rows), Range(2*(src.cols)/4,(3*(src.cols)/4)+100));
+		crop4 = src (Range(0,src.rows), Range(3*(src.cols)/4,src.cols));
+		imwrite("Images/image1crop.jpg",crop1);
+	 	imwrite("Images/image2crop.jpg",crop2);
+		imwrite("Images/image3crop.jpg",crop3);
+		imwrite("Images/image4crop.jpg",crop3);
+		}
+
+		if(counterImages<2 || counterImages>4){
+		   cvui::text(frame, 90, 250, "You can only get from 2 to 4 crops of the image.");
+		}
+
+	 	if(crop1.data){
+		namedWindow("image1", CV_MINOR_VERSION);
+		moveWindow("image1",frame.cols+200, 20);
+		imshow("image1", crop1 );
+		}
+
+		if(crop2.data){
+		namedWindow("image2", CV_MINOR_VERSION);
+		moveWindow("image2",frame.cols+500, 20);
+		imshow("image2", crop2);
+		}
+
+		if(crop3.data){
+		namedWindow("image3", CV_MINOR_VERSION);
+		moveWindow("image3",frame.cols+200, 100+frame.rows);
+		imshow("image3", crop3);
+		}
+
+		if(crop4.data){
+		namedWindow("image4", CV_MINOR_VERSION);
+		moveWindow("image4",frame.cols+500, 100+frame.rows);
+		imshow("image4", crop4);
+		}
+
+
+	}else{
+          cvDestroyWindow("image1");
+	  cvDestroyWindow("image2");
+          cvDestroyWindow("image3");
+          cvDestroyWindow("image4");
+		
+	}
+ 
+
+  /*----------Finish---------*/
 
     cv::imshow("Image", dst);
 
