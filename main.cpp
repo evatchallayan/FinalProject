@@ -37,7 +37,6 @@ void CheckSave(int* isSaved, Mat frame, Mat dst)
 	}
 	if (cvui::button(frame, X-80, 40,"Save"))
 	{
-		system("./face_recognition");
 		imwrite("Images/newImage.jpg",dst);
 		*isSaved = 1;
 		timeVar = 50;
