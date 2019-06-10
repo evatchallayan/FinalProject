@@ -330,11 +330,11 @@ return -1;
 }
 
 
-imgs.push_back(img1); 
-imgs.push_back(img2); 
-//imgs.push_back(img3); 
+imgs.push_back(img1);
+imgs.push_back(img2);
+//imgs.push_back(img3);
 //imgs.push_back(img4);
-imgs.push_back(img5); 
+imgs.push_back(img5);
 
 /**---------------------**/
 
@@ -350,7 +350,7 @@ imgs.push_back(img5);
     }
 
     chooseFile(frame);
-     
+
      if(lTheOpenFileName){
 
        src = imread(lTheOpenFileName, IMREAD_COLOR);
@@ -543,7 +543,7 @@ imgs.push_back(img5);
     Mat dummy=dst.clone();
 
     if (!cascade.load(face_cascade_name)|| !smile_cascade.load(smile_cascade_name) || !eyes_cascade.load(eye_cascade_name))
-	  { 
+	  {
 		  printf("--(!)Error loading\n");
 		  exit(0);
   	};
@@ -565,10 +565,10 @@ imgs.push_back(img5);
     int y_panorama= y_face +135;
     cvui::window(frame, x_panorama, y_panorama, 190,65, "Panorama Stitching");
     cvui::checkbox(frame, x_panorama+10, y_panorama+35, "Stitch", &stitch);
-	
+
 	if(stitch){
-		
-	Mat pano;	
+
+	Mat pano;
 	Ptr<Stitcher> stitcher = Stitcher::create(mode);
 	Stitcher::Status status = stitcher->stitch(imgs, pano);
 
@@ -579,19 +579,19 @@ imgs.push_back(img5);
 	imwrite("Images/stitch.jpg", pano);
 	Mat res = imread("Images/stitch.jpg");
 
-	
+
 	namedWindow("Result", CV_MINOR_VERSION);
 	moveWindow("Result",frame.cols+500, 100+frame.rows);
 	imshow("Result", pano);
-	
-			
+
+
 	}else{
-		cvDestroyWindow("Result");
+		destroyWindow("Result");
 	}
-	
+
    /*----------Finish---------*/
   /* DIVISION BAR */
-	
+
 	int x_division = x_erosion;
     	int y_division = y_erosion+205;
     	cvui::window(frame, x_division, y_division, 230,65, "Division");
@@ -600,10 +600,10 @@ imgs.push_back(img5);
 
 
 	if(divide){
-	
+
 		if(counterImages==2){
-		cvDestroyWindow("image3");
-		cvDestroyWindow("image4");
+		destroyWindow("image3");
+		destroyWindow("image4");
 		crop1 = src (Range(0,src.rows), Range(0,(src.cols/2)+100));
 		crop2 = src (Range(0,src.rows), Range(src.cols/2,src.cols));
 		imwrite("Images/image1crop.jpg",crop1);
@@ -617,7 +617,7 @@ imgs.push_back(img5);
 		imwrite("Images/image1crop.jpg",crop1);
 	 	imwrite("Images/image2crop.jpg",crop2);
 		imwrite("Images/image3crop.jpg",crop3);
-		cvDestroyWindow("image4");
+		destroyWindow("image4");
 		}
 
 		if(counterImages==4){
@@ -661,13 +661,13 @@ imgs.push_back(img5);
 
 
 	}else{
-          cvDestroyWindow("image1");
-	  cvDestroyWindow("image2");
-          cvDestroyWindow("image3");
-          cvDestroyWindow("image4");
-		
+          destroyWindow("image1");
+	  destroyWindow("image2");
+          destroyWindow("image3");
+          destroyWindow("image4");
+
 	}
- 
+
 
   /*----------Finish---------*/
 
