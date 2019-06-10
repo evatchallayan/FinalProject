@@ -4,9 +4,13 @@
 #include <ctime>
 #include <sstream>
 #include <stdlib.h>
+
+#include <opencv2/objdetect/objdetect.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <stdio.h>
+
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/stitching.hpp"
-
 
 #define CVUI_IMPLEMENTATION
 #include "cvui-2.7.0/cvui.h"
@@ -19,13 +23,28 @@
 using namespace cv;
 using namespace std;
 
-Mat src, dst;
+Mat src=imread("Images/Mark-Zuckerberg.jpg", IMREAD_COLOR), dst;
 bool use_draw = false;
 bool use_canny = false;
 bool use_dilation = false;
 bool use_erosion = false;
 int isSaved = 0;
 bool leftButton = false;
+String colour = "Black";
+int red, green, blue;
+int s = 1;
+int timeVar = 50;
+
+String face_cascade_name = "XML/haarcascade_frontalface_alt.xml";
+String smile_cascade_name = "XML/haarcascade_smile.xml";
+String eye_cascade_name = "XML/haarcascade_eye_tree_eyeglasses.xml";
+
+CascadeClassifier cascade;
+CascadeClassifier smile_cascade;
+CascadeClassifier eyes_cascade;
+
+bool detect_eyes = false, detect_face=false, detect_smile=false;
+bool isFacedetected=false, isEyedetected=false,isSmiledetected=false;
 
 
 bool stitch =false;
@@ -36,15 +55,6 @@ bool image4 = false;
 
 Stitcher::Mode mode = Stitcher::PANORAMA;
 vector<Mat> imgs;
-
-
-
-
-
-String colour = "Black";
-int red, green, blue;
-int s = 1;
-int timeVar = 50;
 
 void CheckSave(int* isSaved, Mat frame, Mat dst)
 {
@@ -110,6 +120,7 @@ void turnOffUseVar()
   use_canny = false;
   use_dilation = false;
   use_erosion = false;
+  detect_face=false;
 
 }
 void CallBackFunc(int event, int x, int y, int flags, void* param)
@@ -140,7 +151,7 @@ void CallBackFunc(int event, int x, int y, int flags, void* param)
           }
         }
       }
-      cv::imshow("Image", m);
+      cvui::imshow("Image", m);
 
     }
     // else if ( event == 1 )
@@ -161,6 +172,63 @@ void face(Mat frame)
 	}
 }
 
+void detectAndDraw(Mat& img) {
+
+	vector<Rect> faces;
+	Mat gray;
+	cvtColor(img, gray, COLOR_BGR2GRAY);
+	equalizeHist(gray, gray);
+
+	//-- Detect faces
+	if(detect_face){
+		cascade.detectMultiScale(gray, faces, 1.2, 5, 0 | CASCADE_SCALE_IMAGE, Size(30, 30));
+		for (size_t i = 0; i < faces.size(); i++)
+		{
+			Rect r = faces[i];
+		//if the face is already detected(the rectangle already drawn) don't draw again
+			if(!isFacedetected){
+				Scalar color = Scalar(255, 0, 0);
+			rectangle(img, Point(r.x, r.y), Point(r.x + r.width-1, r.y + r.height-1), color, 3, 8, 0);
+			}
+		Mat faceROI = gray(faces[i]);
+		Mat SmileROI = gray(faces[i]);
+
+		if (detect_eyes) {
+			//-- In each face, detect eyes
+			std::vector<Rect> eyes;
+			eyes_cascade.detectMultiScale(faceROI, eyes, 1.1, 1, 0 | CASCADE_SCALE_IMAGE, Size(30, 30));
+			//eyes_cascade.detectMultiScale(faceROI, eyes);
+			for (size_t j = 0; j < eyes.size(); j++)
+			{
+				//if the eyes are already detected(the circle already drawn) don't draw again
+				if(!isEyedetected){
+					Point center(faces[i].x + eyes[j].x + eyes[j].width*0.5, faces[i].y + eyes[j].y + eyes[j].height*0.5);
+					int radius = cvRound((eyes[j].width + eyes[j].height)*0.25);
+					circle(img, center, radius, Scalar(0, 0, 255), 2, 8, 0);
+				}
+			}
+			isEyedetected=true;
+		}
+		if (detect_smile){
+			//-- Detect Smile
+			std::vector<Rect> smile;
+			smile_cascade.detectMultiScale(SmileROI, smile, 1.7, 20);
+			for (int j = 0; j < smile.size(); j++)
+			{
+				//if the smile is already detected(the rectangle already drawn) don't draw again
+				if(!isSmiledetected){
+					Rect re = smile[j];
+					rectangle(img, Point(re.x + r.x, re.y + r.y), Point(re.x + r.x + re.width - 2, re.y + r.y + re.height - 2), Scalar(0, 255, 0), 2, 8, 0);
+				}
+			}
+			isSmiledetected=true;
+		}
+		}
+		isFacedetected=true;
+	}
+	//cvui::imshow(setting, img);
+}
+
 int main(int argc, const char *argv[])
 {
   Mat frame = cv::Mat(cv::Size(X, Y), CV_8UC3);
@@ -175,7 +243,6 @@ int main(int argc, const char *argv[])
   //   return -1;
   // }
 
-  src = imread("Images/Mark-Zuckerberg.jpg", IMREAD_COLOR);
   if(!src.data)
   {
     cout << "Empty data" << endl;
@@ -202,7 +269,7 @@ int main(int argc, const char *argv[])
   int siz = 0;
   double bValue = 0, cValue = 1;
 
-/**---------DIVISION COUNTER & MATRIXES------**/
+  /**---------DIVISION COUNTER & MATRIXES------**/
 int counterImages = 2;
 bool divide = false;
 Mat crop1;
@@ -251,6 +318,7 @@ imgs.push_back(img2);
 imgs.push_back(img5); 
 
 /**---------------------**/
+
   cvui::init(WINDOW_NAME);
 
   while (true) {
@@ -295,9 +363,9 @@ imgs.push_back(img5);
 
     Mat dst2 = dst;
     int x_resize= x_canny;
-    int y_resize= y_canny+220;
+    int y_resize= y_canny+205;
 
-    cvui::window(frame, x_resize, y_resize, 200,200, "Resize");
+    cvui::window(frame, x_resize, y_resize, 190,200, "Resize");
 
     cvui::checkbox(frame, x_resize+10, y_resize+25, "Keep Proportion", &keepProportion);
     cvui::text(frame, x_resize+60, y_resize+50, "Vertical");
@@ -335,9 +403,9 @@ imgs.push_back(img5);
 
     /*  LIGHTEN BAR */
 
-    int x_light= x_canny;
-    int y_light= y_resize+220;
-    cvui::window(frame, x_light, y_light, 200,200, "Lighten & Darken");
+    int x_light= 260;
+    int y_light= y_resize;
+    cvui::window(frame, x_light, y_light, 190,200, "Lighten & Darken");
     cvui::text(frame, x_light+10, y_light+25, "Brightness trackbar");
     cvui::trackbar(frame, x_light, y_light+50, 150, &bValue, -225.,255.);
     // cvui::trackbar(width, &bValue, -255., 255., 1, "%.1Lf", cvui::TRACKBAR_DISCRETE, 1.);
@@ -360,12 +428,12 @@ imgs.push_back(img5);
     /*  EROSION BAR */
 
     int x_erosion= x_canny;
-    int y_erosion= y_light+220;
-    cvui::window(frame, x_erosion, y_erosion, 400,200, "Dilation & Erosion");
+    int y_erosion= y_light+205;
+    cvui::window(frame, x_erosion, y_erosion, 230,200, "Dilation & Erosion");
     cvui::checkbox(frame, x_erosion+10, y_erosion+25 , "Dilation" , &use_dilation);
     cvui::checkbox(frame, x_erosion+90, y_erosion+25 , "Erosion", &use_erosion);
     //creating the trackbar for choosing the shape of kernel
-    cvui::text(frame, x_erosion, y_erosion+50, "Shape:  0-Box  1-Cross  2-Ellipse");
+    cvui::text(frame, x_erosion, y_erosion+50, "Shape: 0-Box  1-Cross  2-Ellipse");
     cvui::trackbar(frame, x_erosion, y_erosion+60, 150, &shape_type, 0, 2);
 
     //creating the trackbar for reading the size
@@ -391,9 +459,10 @@ imgs.push_back(img5);
     }
     /*----------Finish---------*/
 
+
     /*PEN FUNCTION*/
 
-    int x_draw = 220;
+    int x_draw = 260;
     int y_draw = 10;
     cvui::window(frame, x_draw, y_draw, 190,200, "Draw");
     cvui::checkbox(frame, x_draw+10, y_draw+25 , "Pencil", &use_draw);
@@ -422,15 +491,46 @@ imgs.push_back(img5);
 
     /*----------Finish---------*/
 
+
+
+    /*Face detection FUNCTION*/
+
+
+    int x_face = 260;
+    int y_face = y_erosion;
+    cvui::window(frame, x_face, y_face, 190,130, "Face Detection");
+    cvui::checkbox(frame, x_face+10, y_face+25, "Detect Face", &detect_face);
+		cvui::checkbox(frame, x_face+10, y_face+45, "Detect Eyes", &detect_eyes);
+		cvui::checkbox(frame, x_face+10, y_face+65, "Detect Smile", &detect_smile);
+    cvui::text(frame, x_face+10, y_face+95 , "You have to detect face");
+    cvui::text(frame, x_face+10, y_face+110 ,"to detect smile & eyes");
+
+    //Make a clone image, will be useful to clear the face drawing
+    Mat dummy=dst.clone();
+
+    if (!cascade.load(face_cascade_name)|| !smile_cascade.load(smile_cascade_name) || !eyes_cascade.load(eye_cascade_name))
+	  { 
+		  printf("--(!)Error loading\n");
+		  exit(0);
+  	};
+
+        dummy.copyTo(dst);
+				isFacedetected=false;
+				isSmiledetected=false;
+				isEyedetected=false;
+
+        if(detect_face){
+          detectAndDraw(dst);
+        }
+
+    /*----------Finish---------*/
+
     /*  PANORAMA BAR */
 
-    int x_panorama= x_draw;
-    int y_panorama= y_draw+220;
-    cvui::window(frame, x_panorama, y_panorama, 190,100, "Panorama Stitching");
-    
-	
-
-    cvui::checkbox(frame, x_panorama+10, y_panorama+50, "Stitch", &stitch);
+    int x_panorama= x_face;
+    int y_panorama= y_face +135;
+    cvui::window(frame, x_panorama, y_panorama, 190,65, "Panorama Stitching");
+    cvui::checkbox(frame, x_panorama+10, y_panorama+35, "Stitch", &stitch);
 	
 	if(stitch){
 		
@@ -458,11 +558,11 @@ imgs.push_back(img5);
    /*----------Finish---------*/
   /* DIVISION BAR */
 	
-	int x_division = x_panorama;
-    	int y_division = y_panorama+120;
-    	cvui::window(frame, x_division, y_division, 190,200, "Division");
-	cvui::checkbox(frame, x_division+10, y_division+50, "Division", &divide);
-	cvui::counter(frame, x_division+10,y_division+90, &counterImages);
+	int x_division = x_erosion;
+    	int y_division = y_erosion+205;
+    	cvui::window(frame, x_division, y_division, 230,65, "Division");
+	cvui::checkbox(frame, x_division+10, y_division+25, "Division", &divide);
+	cvui::counter(frame, x_division+90,y_division+25, &counterImages);
 
 
 	if(divide){
@@ -537,10 +637,9 @@ imgs.push_back(img5);
 
   /*----------Finish---------*/
 
-    cv::imshow("Image", dst);
-
 
     cvui::update();
+    cv::imshow("Image", dst);
     cv::imshow(WINDOW_NAME, frame);
 
     // Check if ESC key was pressed
@@ -549,7 +648,6 @@ imgs.push_back(img5);
     }
 
   }
-
 
   return 0;
 }
