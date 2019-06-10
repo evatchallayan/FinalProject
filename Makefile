@@ -1,6 +1,7 @@
 all: resize_comp	lighten_comp canny_comp dilation_comp panorama_comp main_comp face_comp
 execute: run
 opencv3: resize_comp_opencv3 lighten_comp_opencv3 canny_comp_opencv3 dilation_comp_opencv3 panorama_comp_opencv3 main_comp_opencv3 face_comp_opencv3
+opencv3: resize_comp_opencv3 lighten_comp_opencv3 canny_comp_opencv3 dilation_comp_opencv3 panorama_comp_opencv3 main_comp_opencv3
 
 resize_comp:
 	g++ resize.cpp  `pkg-config --libs --cflags opencv4` -o resize
@@ -13,7 +14,7 @@ dilation_comp:
 panorama_comp:
 	g++ panorama_stitching.cpp `pkg-config --libs --cflags opencv4` -o panorama_stitching
 main_comp:
-	g++ main.cpp `pkg-config --libs --cflags opencv4` -o main
+	g++ tinyfiledialogs-code/tinyfiledialogs.c main.cpp `pkg-config --libs --cflags opencv4` -o main
 face_comp:
 	g++ facedetection_photo.cpp `pkg-config --libs --cflags opencv4` -o face_detection
 
@@ -43,6 +44,6 @@ dilation_comp_opencv3:
 panorama_comp_opencv3:
 	g++ panorama_stitching.cpp `pkg-config --libs --cflags opencv` -o panorama_stitching
 main_comp_opencv3:
-	g++ main.cpp `pkg-config --libs --cflags opencv` -o main
+	g++ tinyfiledialogs-code/tinyfiledialogs.c main.cpp `pkg-config --libs --cflags opencv` -o main
 face_comp_opencv3:
 	g++ facedetection_photo.cpp `pkg-config --libs --cflags opencv` -o face_detection

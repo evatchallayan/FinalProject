@@ -9,6 +9,11 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdio.h>
 
+#include "tinyfiledialogs-code/tinyfiledialogs.h"
+
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/stitching.hpp"
+
 #define CVUI_IMPLEMENTATION
 #include "cvui-2.7.0/cvui.h"
 
@@ -20,7 +25,8 @@
 using namespace cv;
 using namespace std;
 
-Mat src=imread("Images/Mark-Zuckerberg.jpg", IMREAD_COLOR), dst;
+//Mat src=imread("Images/Mark-Zuckerberg.jpg", IMREAD_COLOR), dst;
+Mat src, dst;
 bool use_draw = false;
 bool use_canny = false;
 bool use_dilation = false;
@@ -42,6 +48,32 @@ CascadeClassifier eyes_cascade;
 
 bool detect_eyes = false, detect_face=false, detect_smile=false;
 bool isFacedetected=false, isEyedetected=false,isSmiledetected=false;
+
+
+bool stitch =false;
+bool image1 = false;
+bool image2 = false;
+bool image3 = false;
+bool image4 = false;
+
+Stitcher::Mode mode = Stitcher::PANORAMA;
+vector<Mat> imgs;
+
+char const * lFilterPatterns[3] = { "*.jpg", "*.jpeg", "*.png" };
+char const * lTheOpenFileName, *cp;
+
+void chooseFile(Mat frame){
+  if (cvui::button(frame, X-150, 10, "Open File")) {
+      cp = tinyfd_openFileDialog("Choose the image to apply modifications",
+		  "",
+		  3,
+		  lFilterPatterns,
+		  "",
+		  0);
+    }
+
+    if(cp){lTheOpenFileName=cp;}
+}
 
 void CheckSave(int* isSaved, Mat frame, Mat dst)
 {
@@ -107,6 +139,7 @@ void turnOffUseVar()
   use_canny = false;
   use_dilation = false;
   use_erosion = false;
+  detect_face=false;
 
 }
 void CallBackFunc(int event, int x, int y, int flags, void* param)
@@ -137,7 +170,7 @@ void CallBackFunc(int event, int x, int y, int flags, void* param)
           }
         }
       }
-      cv::imshow("Image", m);
+      cvui::imshow("Image", m);
 
     }
     // else if ( event == 1 )
@@ -229,14 +262,14 @@ int main(int argc, const char *argv[])
   //   return -1;
   // }
 
-  if(!src.data)
+  /*if(!src.data)
   {
     cout << "Empty data" << endl;
     exit(0) ;
   }
 
   namedWindow("Image", CV_MINOR_VERSION);
-  moveWindow("Image",60 + frame.cols, 80);
+  moveWindow("Image",60 + frame.cols, 80);*/
 
   int low_threshold = 50, high_threshold = 150;
   int width = 400;
@@ -255,6 +288,56 @@ int main(int argc, const char *argv[])
   int siz = 0;
   double bValue = 0, cValue = 1;
 
+  /**---------DIVISION COUNTER & MATRIXES------**/
+int counterImages = 2;
+bool divide = false;
+Mat crop1;
+Mat crop2;
+Mat crop3;
+Mat crop4;
+
+  /**--------PANORAMA IMAGES----------**/
+
+
+Mat img1= imread("Images/mark1.jpg");
+if(img1.empty()){
+cout<<"Image 1 is empty.";
+return -1;
+}
+
+Mat img2= imread("Images/mark2.jpg");
+if(img2.empty()){
+cout<<"Image 2 is empty.";
+return -1;
+}
+
+Mat img3= imread("Images/mark3.jpg");
+if(img3.empty()){
+cout<<"Image 3 is empty.";
+return -1;
+}
+
+Mat img4= imread("Images/mark4.jpg");
+if(img4.empty()){
+cout<<"Image 4 is empty.";
+return -1;
+}
+
+Mat img5= imread("Images/mark5.jpg");
+if(img4.empty()){
+cout<<"Image 5 is empty.";
+return -1;
+}
+
+
+imgs.push_back(img1); 
+imgs.push_back(img2); 
+//imgs.push_back(img3); 
+//imgs.push_back(img4);
+imgs.push_back(img5); 
+
+/**---------------------**/
+
   cvui::init(WINDOW_NAME);
 
   while (true) {
@@ -262,12 +345,27 @@ int main(int argc, const char *argv[])
 
     //canny_edge(src,dst, frame);
 
-    if (cvui::button(frame, X-80, 10, "Quit")) {
+    if (cvui::button(frame, X-60, 10, "Quit")) {
       break;
     }
 
-     CheckSave(&isSaved, frame, dst);
+    chooseFile(frame);
+     
+     if(lTheOpenFileName){
+
+       src = imread(lTheOpenFileName, IMREAD_COLOR);
+  if(!src.data)
+  {
+    cout << "Empty data" << endl;
+    exit(0) ;
+  }
+
+       CheckSave(&isSaved, frame, dst);
 		 face(frame);
+
+     namedWindow("Image", CV_MINOR_VERSION);
+  //moveWindow("Image",60 + frame.cols, 80);
+
 
     /*  CANNY EDGE BAR */
 
@@ -434,12 +532,12 @@ int main(int argc, const char *argv[])
 
     int x_face = 260;
     int y_face = y_erosion;
-    cvui::window(frame, x_face, y_face, 190,200, "Face Detection");
+    cvui::window(frame, x_face, y_face, 190,130, "Face Detection");
     cvui::checkbox(frame, x_face+10, y_face+25, "Detect Face", &detect_face);
-		cvui::checkbox(frame, x_face+10, y_face+65, "Detect Eyes", &detect_eyes);
-		cvui::checkbox(frame, x_face+10, y_face+45, "Detect Smile", &detect_smile);
-    cvui::text(frame, x_face+10, y_face+115 , "You have to detect face");
-    cvui::text(frame, x_face+10, y_face+130 ,"to detect smile & eyes");
+		cvui::checkbox(frame, x_face+10, y_face+45, "Detect Eyes", &detect_eyes);
+		cvui::checkbox(frame, x_face+10, y_face+65, "Detect Smile", &detect_smile);
+    cvui::text(frame, x_face+10, y_face+95 , "You have to detect face");
+    cvui::text(frame, x_face+10, y_face+110 ,"to detect smile & eyes");
 
     //Make a clone image, will be useful to clear the face drawing
     Mat dummy=dst.clone();
@@ -461,9 +559,121 @@ int main(int argc, const char *argv[])
 
     /*----------Finish---------*/
 
+    /*  PANORAMA BAR */
 
+    int x_panorama= x_face;
+    int y_panorama= y_face +135;
+    cvui::window(frame, x_panorama, y_panorama, 190,65, "Panorama Stitching");
+    cvui::checkbox(frame, x_panorama+10, y_panorama+35, "Stitch", &stitch);
+	
+	if(stitch){
+		
+	Mat pano;	
+	Ptr<Stitcher> stitcher = Stitcher::create(mode);
+	Stitcher::Status status = stitcher->stitch(imgs, pano);
+
+	if (status != Stitcher::OK){
+        	cvui::text(frame, 90, 250, "STATUS NOT OK");
+   	}
+
+	imwrite("Images/stitch.jpg", pano);
+	Mat res = imread("Images/stitch.jpg");
+
+	
+	namedWindow("Result", CV_MINOR_VERSION);
+	moveWindow("Result",frame.cols+500, 100+frame.rows);
+	imshow("Result", pano);
+	
+			
+	}else{
+		cvDestroyWindow("Result");
+	}
+	
+   /*----------Finish---------*/
+  /* DIVISION BAR */
+	
+	int x_division = x_erosion;
+    	int y_division = y_erosion+205;
+    	cvui::window(frame, x_division, y_division, 230,65, "Division");
+	cvui::checkbox(frame, x_division+10, y_division+25, "Division", &divide);
+	cvui::counter(frame, x_division+90,y_division+25, &counterImages);
+
+
+	if(divide){
+	
+		if(counterImages==2){
+		cvDestroyWindow("image3");
+		cvDestroyWindow("image4");
+		crop1 = src (Range(0,src.rows), Range(0,(src.cols/2)+100));
+		crop2 = src (Range(0,src.rows), Range(src.cols/2,src.cols));
+		imwrite("Images/image1crop.jpg",crop1);
+	 	imwrite("Images/image2crop.jpg",crop2);
+		}
+
+		if(counterImages==3){
+		crop1 = src (Range(0,src.rows), Range(0,(src.cols/3)+100));
+		crop2 = src (Range(0,src.rows), Range(src.cols/3,(2*(src.cols)/3))+100);
+		crop3 = src (Range(0,src.rows), Range(2*(src.cols)/3,src.cols));
+		imwrite("Images/image1crop.jpg",crop1);
+	 	imwrite("Images/image2crop.jpg",crop2);
+		imwrite("Images/image3crop.jpg",crop3);
+		cvDestroyWindow("image4");
+		}
+
+		if(counterImages==4){
+		crop1 = src (Range(0,src.rows), Range(0,(src.cols/4)+100));
+		crop2 = src (Range(0,src.rows), Range(src.cols/4,(2*(src.cols)/4))+100);
+		crop3 = src (Range(0,src.rows), Range(2*(src.cols)/4,(3*(src.cols)/4)+100));
+		crop4 = src (Range(0,src.rows), Range(3*(src.cols)/4,src.cols));
+		imwrite("Images/image1crop.jpg",crop1);
+	 	imwrite("Images/image2crop.jpg",crop2);
+		imwrite("Images/image3crop.jpg",crop3);
+		imwrite("Images/image4crop.jpg",crop3);
+		}
+
+		if(counterImages<2 || counterImages>4){
+		   cvui::text(frame, 90, 250, "You can only get from 2 to 4 crops of the image.");
+		}
+
+	 	if(crop1.data){
+		namedWindow("image1", CV_MINOR_VERSION);
+		moveWindow("image1",frame.cols+200, 20);
+		imshow("image1", crop1 );
+		}
+
+		if(crop2.data){
+		namedWindow("image2", CV_MINOR_VERSION);
+		moveWindow("image2",frame.cols+500, 20);
+		imshow("image2", crop2);
+		}
+
+		if(crop3.data){
+		namedWindow("image3", CV_MINOR_VERSION);
+		moveWindow("image3",frame.cols+200, 100+frame.rows);
+		imshow("image3", crop3);
+		}
+
+		if(crop4.data){
+		namedWindow("image4", CV_MINOR_VERSION);
+		moveWindow("image4",frame.cols+500, 100+frame.rows);
+		imshow("image4", crop4);
+		}
+
+
+	}else{
+          cvDestroyWindow("image1");
+	  cvDestroyWindow("image2");
+          cvDestroyWindow("image3");
+          cvDestroyWindow("image4");
+		
+	}
+ 
+
+  /*----------Finish---------*/
+
+      cvui::imshow("Image", dst);
+     }
     cvui::update();
-    cv::imshow("Image", dst);
     cv::imshow(WINDOW_NAME, frame);
 
     // Check if ESC key was pressed
