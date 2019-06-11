@@ -46,3 +46,7 @@ main_comp_opencv3:
 	g++ main.cpp `pkg-config --libs --cflags opencv` -o main
 face_comp_opencv3:
 	g++ facedetection_photo.cpp `pkg-config --libs --cflags opencv` -o face_detection
+panorama_stitching_interface_opencv3:
+	g++ panorama_stitching_interface.cpp `pkg-config --libs --cflags opencv` -o panorama_stitching_interface
+divideImage_opencv3:
+	g++ divideImage.cpp `pkg-config --libs --cflags opencv` -o divideImage
